@@ -14,7 +14,7 @@ if (!firebase.apps.length) {
   firebase.app();
 }
 
-const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'asc').limit(120);
+const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(120);
 
 function App() {
   const [data, setData] = useState(null);
@@ -23,10 +23,12 @@ function App() {
     pricesRef
     .get()
     .then((snapshot) => {
-      const prices = snapshot.docs.map((doc) => ({
+      const all_prices = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+
+      const prices = all_prices.reverse();
 
       const labels = prices.map(price => (new Date(price.date.seconds * 1000).toLocaleString('en-GB', { timeZone: 'UTC' })));
       const uni_swap = prices.map(price => (price.uni_swap));
