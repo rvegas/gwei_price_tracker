@@ -1,11 +1,8 @@
-import logo from './logo.svg';
 import './App.css';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 
 import {Line} from 'react-chartjs-2';
-
 import firebase from 'firebase';
-
 import firebaseConfig from './config';
 
 if (!firebase.apps.length) {
@@ -14,12 +11,12 @@ if (!firebase.apps.length) {
   firebase.app();
 }
 
-const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(120);
+const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(60);
 
 function App() {
   const [data, setData] = useState(null);
 
-  useEffect(() => {
+  const updateData = useCallback(() => {
     pricesRef
     .get()
     .then((snapshot) => {
@@ -27,22 +24,23 @@ function App() {
         id: doc.id,
         ...doc.data(),
       }));
-
       const prices = all_prices.reverse();
-
       const labels = prices.map(price => (new Date(price.date.seconds * 1000).toLocaleString('en-GB', { timeZone: 'UTC' })));
       const uni_swap = prices.map(price => (price.uni_swap));
       const erc_20 = prices.map(price => (price.erc20_transfer));
       const uni_liq = prices.map(price => (price.uni_liq));
-
       setData({
         labels,
         uni_swap,
         erc_20,
         uni_liq
       });
-    });
-  },[setData]);
+    }
+    )}, []);
+
+  useEffect(() => {
+      updateData();
+  },[updateData]);
 
   const chart = {
     labels: data ? data.labels : [],
@@ -95,7 +93,7 @@ function App() {
         </div>
       </header>
       <footer>
-        <a href='https://etherscan.io/apis' target='_blank'>Powered by Etherscan.io APIs</a>
+        <a href='https://etherscan.io/apis' rel="noreferrer" target='_blank'>Powered by Etherscan.io APIs</a>
       </footer>
     </div>
   );
