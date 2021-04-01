@@ -1,7 +1,8 @@
 import './App.css';
-import {useState, useEffect, useCallback} from 'react';
+import useLocalStorageWitTTL from './storage';
+import { useEffect, useCallback } from 'react';
 
-import {Line} from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import firebase from 'firebase';
 import firebaseConfig from './config';
 
@@ -11,36 +12,38 @@ if (!firebase.apps.length) {
   firebase.app();
 }
 
-const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(60);
+const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(30);
 
 function App() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useLocalStorageWitTTL('chart_prices', null);
 
   const updateData = useCallback(() => {
-    pricesRef
-    .get()
-    .then((snapshot) => {
-      const all_prices = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      const prices = all_prices.reverse();
-      const labels = prices.map(price => (new Date(price.date.seconds * 1000).toLocaleString('en-GB', { timeZone: 'UTC' })));
-      const uni_swap = prices.map(price => (price.uni_swap));
-      const erc_20 = prices.map(price => (price.erc20_transfer));
-      const uni_liq = prices.map(price => (price.uni_liq));
-      setData({
-        labels,
-        uni_swap,
-        erc_20,
-        uni_liq
-      });
+    if (data === null) {
+      pricesRef
+        .get()
+        .then((snapshot) => {
+          const all_prices = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          const prices = all_prices.reverse();
+          const labels = prices.map(price => (new Date(price.date.seconds * 1000).toLocaleString('en-GB', { timeZone: 'UTC' }).slice(-8)));
+          const uni_swap = prices.map(price => (price.uni_swap));
+          const erc_20 = prices.map(price => (price.erc20_transfer));
+          const uni_liq = prices.map(price => (price.uni_liq));
+          setData({
+            labels,
+            uni_swap,
+            erc_20,
+            uni_liq
+          });
+        });
     }
-    )}, []);
+  }, [data, setData]);
 
   useEffect(() => {
-      updateData();
-  },[updateData]);
+    updateData();
+  }, [updateData]);
 
   const chart = {
     labels: data ? data.labels : [],
@@ -89,8 +92,13 @@ function App() {
       <header className="App-header">
         <h2>Gwei Prices</h2>
         <div className={'chart'}>
-          <Line data={chart}/>
+          <Line data={chart} />
         </div>
+        <span>
+          ERC20 TRANSFER: <b>{data && (Math.round(data.erc_20[data.erc_20.length - 1] * 100) / 100).toFixed(2)}</b> |
+          UNISWAP SWAP: <b>{data && (Math.round(data.uni_swap[data.uni_swap.length - 1] * 100) / 100).toFixed(2)}</b> |
+          UNISWAP LIQ POOL: <b>{data && (Math.round(data.uni_liq[data.uni_liq.length - 1] * 100) / 100).toFixed(2)}</b>
+        </span>
       </header>
       <footer>
         <a href='https://etherscan.io/apis' rel="noreferrer" target='_blank'>Powered by Etherscan.io APIs</a>
