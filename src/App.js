@@ -95,9 +95,9 @@ function App() {
           <Line data={chart} />
         </div>
         <span>
-          ERC20 TRANSFER: <b>{data && (Math.round(data.erc_20[data.erc_20.length - 1] * 100) / 100).toFixed(2)}</b> |
-          UNISWAP SWAP: <b>{data && (Math.round(data.uni_swap[data.uni_swap.length - 1] * 100) / 100).toFixed(2)}</b> |
-          UNISWAP LIQ POOL: <b>{data && (Math.round(data.uni_liq[data.uni_liq.length - 1] * 100) / 100).toFixed(2)}</b>
+          ERC20 TRANSFER: <b>${data && (Math.round(data.erc_20[data.erc_20.length - 1] * 100) / 100).toFixed(2)}</b> |
+          UNISWAP SWAP: <b>${data && (Math.round(data.uni_swap[data.uni_swap.length - 1] * 100) / 100).toFixed(2)}</b> |
+          UNISWAP LIQ POOL: <b>${data && (Math.round(data.uni_liq[data.uni_liq.length - 1] * 100) / 100).toFixed(2)}</b>
         </span>
       </header>
       <footer>
