@@ -1,6 +1,6 @@
 import './App.css';
 import useLocalStorageWitTTL from './storage';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 
 import { Line } from 'react-chartjs-2';
 import firebase from 'firebase';
@@ -12,13 +12,18 @@ if (!firebase.apps.length) {
   firebase.app();
 }
 
-const pricesRef = firebase.firestore().collection('gwei_prices').orderBy('date', 'desc').limit(30);
-
 function App() {
   const [data, setData] = useLocalStorageWitTTL('chart_prices', null);
+  const [ticks, setTicks] = useState(36);
 
-  const updateData = useCallback(() => {
+  const updateData = useCallback((ticks) => {
     if (data === null) {
+      console.log('reloading data')
+      const pricesRef = firebase
+                        .firestore()
+                        .collection('gwei_prices')
+                        .orderBy('date', 'desc')
+                        .limit(ticks);
       pricesRef
         .get()
         .then((snapshot) => {
@@ -37,13 +42,14 @@ function App() {
             erc_20,
             uni_liq
           });
-        });
+        })
+        .catch(function(error) {console.log(error)});
     }
   }, [data, setData]);
 
   useEffect(() => {
-    updateData();
-  }, [updateData]);
+    updateData(ticks);
+  }, [updateData, ticks]);
 
   const chart = {
     labels: data ? data.labels : [],
@@ -87,6 +93,11 @@ function App() {
     ]
   };
 
+  const handleTicks = () => {
+    setData(null);
+    setTicks(ticks === 36 ? 72 : 36);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -99,6 +110,7 @@ function App() {
           UNISWAP SWAP: <b>${data && (Math.round(data.uni_swap[data.uni_swap.length - 1] * 100) / 100).toFixed(2)}</b> |
           UNISWAP LIQ POOL: <b>${data && (Math.round(data.uni_liq[data.uni_liq.length - 1] * 100) / 100).toFixed(2)}</b>
         </span>
+        <p><button onClick={handleTicks}>toggle {ticks} ticks </button></p>
       </header>
       <footer>
         <a href='https://etherscan.io/apis' rel="noreferrer" target='_blank'>Powered by Etherscan.io APIs</a>

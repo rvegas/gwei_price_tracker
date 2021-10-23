@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-// 5min
-const TTL = 300000;
+// 16min
+const TTL = 1000000;
 
 export const useLocalStorageWitTTL = (key, initialValue) => {
   const [storedValue, setStoredValue] = useState(() => {
@@ -9,7 +9,7 @@ export const useLocalStorageWitTTL = (key, initialValue) => {
       const item = window.localStorage.getItem(key);
       const data = JSON.parse(item);
 	    const now = new Date();
-      if (now.getTime() > data.expiry) {
+      if (data && now.getTime() > data.expiry) {
         // If the item is expired, delete the item from storage
         // and return null
         localStorage.removeItem(key)
